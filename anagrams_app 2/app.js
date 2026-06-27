@@ -78,10 +78,9 @@
 
   function updateEnterButton(){
     const btn = $('enterBtn');
-    const inactive = state.selected.length < 3 || state.over;
     btn.disabled = false;
-    btn.classList.toggle('soft-disabled', inactive);
-    btn.style.opacity = inactive ? '0.65' : '1';
+    btn.classList.remove('soft-disabled');
+    btn.style.opacity = '1';
   }
   function scheduleRender(){
     if (renderScheduled) return;
@@ -102,7 +101,7 @@
       const item = state.selected[i];
       d.className = item ? 'tile' : 'slot ghost';
       d.textContent = item ? item.letter : '';
-      if (item) addFastTap(d, () => removeSelected(i));
+      if (item) d.dataset.selected = 'true';
       sel.appendChild(d);
     }
     const row = $('letterRow'); row.innerHTML = '';
@@ -136,8 +135,7 @@
       const slot = selectedSlots[selectedPos];
       slot.className = 'tile';
       slot.textContent = state.letters[i];
-      slot._selectedIndex = selectedPos;
-      addFastTap(slot, () => removeSelected(slot._selectedIndex));
+      slot.dataset.selected = 'true';
     }
 
     const letterCell = $('letterRow').children[i];
@@ -279,6 +277,19 @@
     selectNearestLetterFromRow(e, row);
   }
 
+  function handleSelectedRowTap(e){
+    if (state.over) return;
+
+    const row = $('selectedRow');
+    const slot = e.target && e.target.closest ? e.target.closest('#selectedRow button') : null;
+    if (!slot || !row.contains(slot)) return;
+
+    const index = Array.from(row.children).indexOf(slot);
+    if (index < 0 || index >= state.selected.length) return;
+
+    removeSelected(index);
+  }
+
   function addFastTap(el, handler){
     if (el._fastTapBound) return;
     el._fastTapBound = true;
@@ -304,6 +315,7 @@
   $('startBtn').onclick=startGame;
   addFastTap($('enterBtn'), submit);
   addFastTap($('shuffleBtn'), shuffleLetters);
+  addFastTap($('selectedRow'), handleSelectedRowTap);
   $('endBtn').onclick=finish;
   $('newBtn').onclick=()=>show('setup');
   $('resultsBack').onclick=()=>show('setup');
