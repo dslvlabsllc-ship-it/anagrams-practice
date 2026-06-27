@@ -16,6 +16,10 @@
     score: 0, remaining: 60, timerId: null, over: false, allWords: []
   };
 
+  let enterBtnEl = null;
+  let selectedSlotEls = [];
+  let letterCellEls = [];
+
   function show(id){ screens.forEach(s => $(s).classList.toggle('hidden', s !== id)); }
   function pad(n){ return String(n).padStart(2,'0'); }
   function fmtScore(n){ return String(n).padStart(4,'0'); }
@@ -48,6 +52,43 @@
     shuffleArray(rest);
     return rest.concat(last);
   }
+
+  let selectedRowEl = null;
+  let letterRowEl = null;
+
+  function buildBoard(){
+    setGridCols();
+
+    selectedRowEl.innerHTML = '';
+    selectedSlotEls = [];
+    for (let i = 0; i < state.len; i++) {
+      const slot = document.createElement('button');
+      slot.className = 'slot ghost';
+      selectedRowEl.appendChild(slot);
+      selectedSlotEls.push(slot);
+    }
+
+    letterRowEl.innerHTML = '';
+    letterCellEls = [];
+
+    for (let i = 0; i < state.letters.length; i++) {
+      const cell = document.createElement('button');
+      cell.className = 'letter-cell';
+      cell.type = 'button';
+      cell._index = i;
+
+      const face = document.createElement('span');
+      face.className = 'tile';
+      face.textContent = state.letters[i];
+
+      cell.appendChild(face);
+      addFastTap(cell, () => selectLetter(cell._index));
+
+      letterRowEl.appendChild(cell);
+      letterCellEls.push(cell);
+    }
+  }
+
   function startGame(){
     const err = $('setupError'); err.textContent = '';
     let letters;
@@ -61,6 +102,10 @@
     }
     Object.assign(state, {letters, selected: [], found: new Set(), score:0, remaining: state.time, over:false});
     state.allWords = allSolutions(letters);
+    selectedRowEl = $('selectedRow');
+    letterRowEl = $('letterRow');
+    enterBtnEl = $('enterBtn');
+    buildBoard();
     renderGame();
     show('game');
     if (state.time === 0) { $('timer').classList.add('hidden'); $('endBtn').classList.remove('hidden'); }
@@ -84,37 +129,9 @@
     });
   }
   function renderGame(){
-    setGridCols();
     $('wordCount').textContent = state.found.size;
     $('score').textContent = fmtScore(state.score);
-    $('enterBtn').classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
-    const sel = $('selectedRow'); sel.innerHTML = '';
-    for (let i=0;i<state.len;i++) {
-      const d = document.createElement('button');
-      const item = state.selected[i];
-      d.className = item ? 'tile' : 'slot ghost';
-      d.textContent = item ? item.letter : '';
-      if (item) addFastTap(d, () => removeSelected(i));
-      sel.appendChild(d);
-    }
-    const row = $('letterRow'); row.innerHTML = '';
-    for (let i=0;i<state.letters.length;i++) {
-      const used = state.selected.some(x => x.index === i);
-      const cell = document.createElement('button');
-      cell.className = 'letter-cell';
-      cell.type = 'button';
-      cell.dataset.index = String(i);
-      cell._index = i;
-
-      const face = document.createElement('span');
-      face.className = used ? 'slot' : 'tile';
-      face.textContent = used ? '' : state.letters[i];
-
-      cell.appendChild(face);
-      if (!used) addFastTap(cell, () => selectLetter(cell._index));
-      row.appendChild(cell);
-    }
-    row.onGapTap = e => selectNearestLetterFromRow(e, row);
+    enterBtnEl.classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
   }
   function selectLetter(i){
     if (state.over || state.selected.length >= state.len) return;
@@ -124,27 +141,51 @@
 
     const selectedPos = state.selected.length - 1;
 
-    const selectedSlots = $('selectedRow').children;
-    if (selectedSlots[selectedPos]) {
-      selectedSlots[selectedPos].className = 'tile';
-      selectedSlots[selectedPos].textContent = state.letters[i];
+    const slot = selectedSlotEls[selectedPos];
+    if (slot) {
+      slot.className = 'tile';
+      slot.textContent = state.letters[i];
     }
 
-    const letterCell = $('letterRow').children[i];
-    if (letterCell) {
-      const face = letterCell.firstElementChild;
+    const cell = letterCellEls[i];
+    if (cell) {
+      const face = cell.firstElementChild;
       if (face) {
         face.className = 'slot';
         face.textContent = '';
       }
     }
 
-    $('enterBtn').classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
+    enterBtnEl.classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
   }
   function removeSelected(i){
     if (state.over) return;
 
     state.selected.splice(i,1);
+
+    for (let s = 0; s < state.len; s++) {
+      const item = state.selected[s];
+      const slot = selectedSlotEls[s];
+      if (!slot) continue;
+
+      if (item) {
+        slot.className = 'tile';
+        slot.textContent = item.letter;
+      } else {
+        slot.className = 'slot ghost';
+        slot.textContent = '';
+      }
+    }
+
+    for (let l = 0; l < state.letters.length; l++) {
+      const face = letterCellEls[l]?.firstElementChild;
+      if (!face) continue;
+
+      const used = state.selected.some(x => x.index === l);
+      face.className = used ? 'slot' : 'tile';
+      face.textContent = used ? '' : state.letters[l];
+    }
+
     renderGame();
   }
   function submit(){
