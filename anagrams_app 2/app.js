@@ -87,7 +87,6 @@
     setGridCols();
     $('wordCount').textContent = state.found.size;
     $('score').textContent = fmtScore(state.score);
-    $('enterBtn').disabled = false;
     $('enterBtn').classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
     const sel = $('selectedRow'); sel.innerHTML = '';
     for (let i=0;i<state.len;i++) {
@@ -119,13 +118,33 @@
   function selectLetter(i){
     if (state.over || state.selected.length >= state.len) return;
     if (state.selected.some(x => x.index === i)) return;
+
     state.selected.push({letter: state.letters[i], index:i});
-    scheduleRender();
+
+    const selectedPos = state.selected.length - 1;
+
+    const selectedSlots = $('selectedRow').children;
+    if (selectedSlots[selectedPos]) {
+      selectedSlots[selectedPos].className = 'tile';
+      selectedSlots[selectedPos].textContent = state.letters[i];
+    }
+
+    const letterCell = $('letterRow').children[i];
+    if (letterCell) {
+      const face = letterCell.firstElementChild;
+      if (face) {
+        face.className = 'slot';
+        face.textContent = '';
+      }
+    }
+
+    $('enterBtn').classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
   }
   function removeSelected(i){
     if (state.over) return;
+
     state.selected.splice(i,1);
-    scheduleRender();
+    renderGame();
   }
   function submit(){
     if (state.over || state.selected.length < 3) return;
