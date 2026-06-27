@@ -91,11 +91,18 @@
     const row = $('letterRow'); row.innerHTML = '';
     for (let i=0;i<state.letters.length;i++) {
       const used = state.selected.some(x => x.index === i);
-      const b = document.createElement('button');
-      b.className = used ? 'slot' : 'tile';
-      b.textContent = used ? '' : state.letters[i];
-      if (!used) addFastTap(b, () => selectLetter(i));
-      row.appendChild(b);
+      const cell = document.createElement('button');
+      cell.className = 'letter-cell';
+      cell.type = 'button';
+      cell.dataset.index = String(i);
+
+      const face = document.createElement('span');
+      face.className = used ? 'slot' : 'tile';
+      face.textContent = used ? '' : state.letters[i];
+
+      cell.appendChild(face);
+      if (!used) addFastTap(cell, () => selectLetter(i));
+      row.appendChild(cell);
     }
     row.onGapTap = e => selectNearestLetterFromRow(e, row);
   }
@@ -197,7 +204,7 @@
     }).sort((a, b) => a.distance - b.distance);
 
     const twoClosestPositions = rankedPositions.slice(0, 2);
-    const closestAvailablePosition = twoClosestPositions.find(pos => pos.tile.classList.contains('tile'));
+    const closestAvailablePosition = twoClosestPositions.find(pos => pos.tile.querySelector('.tile'));
 
     if (!closestAvailablePosition) return;
     selectLetter(closestAvailablePosition.index);
@@ -221,10 +228,10 @@
     e.preventDefault();
     e.stopPropagation();
 
-    const tile = e.target && e.target.closest ? e.target.closest('#letterRow button') : null;
-    if (tile && tile.classList.contains('tile')) {
-      const index = Array.from(row.children).indexOf(tile);
-      if (index >= 0) selectLetter(index);
+    const cell = e.target && e.target.closest ? e.target.closest('#letterRow .letter-cell') : null;
+    if (cell && cell.querySelector('.tile')) {
+      const index = Number(cell.dataset.index);
+      if (Number.isInteger(index) && index >= 0) selectLetter(index);
       return;
     }
 
