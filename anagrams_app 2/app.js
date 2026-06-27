@@ -75,6 +75,14 @@
     },1000);
   }
   function tickLabel(){ $('timer').textContent = `00:${pad(Math.max(0,state.remaining))}`; }
+
+  function updateEnterButton(){
+    const btn = $('enterBtn');
+    const inactive = state.selected.length < 3 || state.over;
+    btn.disabled = false;
+    btn.classList.toggle('soft-disabled', inactive);
+    btn.style.opacity = inactive ? '0.65' : '1';
+  }
   function scheduleRender(){
     if (renderScheduled) return;
     renderScheduled = true;
@@ -87,7 +95,7 @@
     setGridCols();
     $('wordCount').textContent = state.found.size;
     $('score').textContent = fmtScore(state.score);
-    $('enterBtn').classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
+    updateEnterButton();
     const sel = $('selectedRow'); sel.innerHTML = '';
     for (let i=0;i<state.len;i++) {
       const d = document.createElement('button');
@@ -125,8 +133,11 @@
 
     const selectedSlots = $('selectedRow').children;
     if (selectedSlots[selectedPos]) {
-      selectedSlots[selectedPos].className = 'tile';
-      selectedSlots[selectedPos].textContent = state.letters[i];
+      const slot = selectedSlots[selectedPos];
+      slot.className = 'tile';
+      slot.textContent = state.letters[i];
+      slot._selectedIndex = selectedPos;
+      addFastTap(slot, () => removeSelected(slot._selectedIndex));
     }
 
     const letterCell = $('letterRow').children[i];
@@ -138,7 +149,7 @@
       }
     }
 
-    $('enterBtn').classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
+    updateEnterButton();
   }
   function removeSelected(i){
     if (state.over) return;
@@ -159,6 +170,7 @@
       flash(`${word} (+${p})`, true);
     }
     state.selected = [];
+    updateEnterButton();
     renderGame();
   }
   let toastTimer;
@@ -268,22 +280,23 @@
   }
 
   function addFastTap(el, handler){
+    if (el._fastTapBound) return;
+    el._fastTapBound = true;
+
+    let lastTouchTime = 0;
+
     el.addEventListener('touchstart', e => {
-      e.preventDefault();
+      lastTouchTime = Date.now();
       handler(e);
-    }, {passive:false});
+    }, {passive:true});
+
     el.addEventListener('mousedown', e => {
-      e.preventDefault();
+      if (Date.now() - lastTouchTime < 600) return;
       handler(e);
     });
   }
 
-  document.addEventListener('touchstart', handleLetterRowTouch, {passive:false, capture:true});
 
-  addFastTap($('letterRow'), e => {
-    const row = $('letterRow');
-    if (row.onGapTap) row.onGapTap(e);
-  });
 
   document.querySelectorAll('#lengthSeg button').forEach(b=>b.onclick=()=>{state.len=+b.dataset.length;document.querySelectorAll('#lengthSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('customLetters').maxLength=state.len;});
   document.querySelectorAll('#timeSeg button').forEach(b=>b.onclick=()=>{state.time=+b.dataset.time;document.querySelectorAll('#timeSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
