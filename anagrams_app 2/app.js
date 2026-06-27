@@ -10,6 +10,7 @@
   }
   const $ = id => document.getElementById(id);
   const screens = ['setup','game','results','allWords'];
+  let renderScheduled = false;
   const state = {
     len: 6, time: 60, mode: 'random', letters: [], selected: [], found: new Set(),
     score: 0, remaining: 60, timerId: null, over: false, allWords: []
@@ -74,11 +75,20 @@
     },1000);
   }
   function tickLabel(){ $('timer').textContent = `00:${pad(Math.max(0,state.remaining))}`; }
+  function scheduleRender(){
+    if (renderScheduled) return;
+    renderScheduled = true;
+    requestAnimationFrame(() => {
+      renderScheduled = false;
+      renderGame();
+    });
+  }
   function renderGame(){
     setGridCols();
     $('wordCount').textContent = state.found.size;
     $('score').textContent = fmtScore(state.score);
-    $('enterBtn').disabled = state.selected.length < 3 || state.over;
+    $('enterBtn').disabled = false;
+    $('enterBtn').classList.toggle('soft-disabled', state.selected.length < 3 || state.over);
     const sel = $('selectedRow'); sel.innerHTML = '';
     for (let i=0;i<state.len;i++) {
       const d = document.createElement('button');
@@ -110,12 +120,12 @@
     if (state.over || state.selected.length >= state.len) return;
     if (state.selected.some(x => x.index === i)) return;
     state.selected.push({letter: state.letters[i], index:i});
-    renderGame();
+    scheduleRender();
   }
   function removeSelected(i){
     if (state.over) return;
     state.selected.splice(i,1);
-    renderGame();
+    scheduleRender();
   }
   function submit(){
     if (state.over || state.selected.length < 3) return;
@@ -272,7 +282,7 @@
     if ($('game').classList.contains('hidden')) return;
     const k = e.key.toUpperCase();
     if (k === 'ENTER') submit();
-    else if (k === 'BACKSPACE') { state.selected.pop(); renderGame(); }
+    else if (k === 'BACKSPACE') { state.selected.pop(); scheduleRender(); }
     else if (/^[A-Z]$/.test(k)) {
       const idx = state.letters.findIndex((l,i)=>l===k && !state.selected.some(x=>x.index===i));
       if (idx >= 0) selectLetter(idx);
