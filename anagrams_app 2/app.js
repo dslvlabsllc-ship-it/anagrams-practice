@@ -104,14 +104,13 @@
       cell.className = 'letter-cell';
       cell.type = 'button';
       cell.dataset.index = String(i);
-      cell._index = i;
 
       const face = document.createElement('span');
       face.className = used ? 'slot' : 'tile';
       face.textContent = used ? '' : state.letters[i];
 
       cell.appendChild(face);
-      if (!used) addFastTap(cell, () => selectLetter(cell._index));
+      if (!used) addFastTap(cell, () => selectLetter(i));
       row.appendChild(cell);
     }
     row.onGapTap = e => selectNearestLetterFromRow(e, row);
@@ -240,13 +239,51 @@
     selectLetter(closestAvailablePosition.index);
   }
 
-  function addFastTap(el, handler){
-    if (el._fastTapBound) return;
-    el._fastTapBound = true;
+  function handleLetterRowTouch(e){
+    if ($('game').classList.contains('hidden')) return;
 
-    el.addEventListener('touchstart', handler, {passive:true});
-    el.addEventListener('mousedown', handler);
+    const row = $('letterRow');
+    if (!row) return;
+
+    const touch = e.touches && e.touches[0] ? e.touches[0] : null;
+    if (!touch) return;
+
+    const rect = row.getBoundingClientRect();
+    const x = touch.clientX;
+    const y = touch.clientY;
+
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const cell = e.target && e.target.closest ? e.target.closest('#letterRow .letter-cell') : null;
+    if (cell && cell.querySelector('.tile')) {
+      const index = Number(cell.dataset.index);
+      if (Number.isInteger(index) && index >= 0) selectLetter(index);
+      return;
+    }
+
+    selectNearestLetterFromRow(e, row);
   }
+
+  function addFastTap(el, handler){
+    el.addEventListener('touchstart', e => {
+      e.preventDefault();
+      handler(e);
+    }, {passive:false});
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      handler(e);
+    });
+  }
+
+  document.addEventListener('touchstart', handleLetterRowTouch, {passive:false, capture:true});
+
+  addFastTap($('letterRow'), e => {
+    const row = $('letterRow');
+    if (row.onGapTap) row.onGapTap(e);
+  });
 
   document.querySelectorAll('#lengthSeg button').forEach(b=>b.onclick=()=>{state.len=+b.dataset.length;document.querySelectorAll('#lengthSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('customLetters').maxLength=state.len;});
   document.querySelectorAll('#timeSeg button').forEach(b=>b.onclick=()=>{state.time=+b.dataset.time;document.querySelectorAll('#timeSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
