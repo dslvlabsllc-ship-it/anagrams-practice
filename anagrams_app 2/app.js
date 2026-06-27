@@ -10,6 +10,7 @@
   }
   const $ = id => document.getElementById(id);
   const screens = ['setup','game','results','allWords'];
+  const APP_VERSION = 'v1.1-hitbox';
   let renderScheduled = false;
   const state = {
     len: 6, time: 60, mode: 'random', letters: [], selected: [], found: new Set(),
@@ -17,6 +18,15 @@
   };
 
   function show(id){ screens.forEach(s => $(s).classList.toggle('hidden', s !== id)); }
+  function renderVersionBadge(){
+    let badge = document.getElementById('versionBadge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'versionBadge';
+      document.body.appendChild(badge);
+    }
+    badge.textContent = APP_VERSION;
+  }
   function pad(n){ return String(n).padStart(2,'0'); }
   function fmtScore(n){ return String(n).padStart(4,'0'); }
   function points(w){ return SCORE[w.length] || 0; }
@@ -332,4 +342,5 @@
       if (idx >= 0) selectLetter(idx);
     }
   });
+  renderVersionBadge();
 })();
