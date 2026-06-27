@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Anagrams" />
+  <title>Anagrams Practice</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="app">
+    <section id="setup" class="screen setup-screen">
+      <div class="handle"></div>
+      <div class="setup-card">
+        <h1>Anagrams</h1>
+        <p class="sub">Fast local practice with TWL words.</p>
+
+        <div class="row-label">Letters</div>
+        <div class="seg" id="lengthSeg">
+          <button data-length="5">5</button>
+          <button data-length="6" class="active">6</button>
+          <button data-length="7">7</button>
+        </div>
+
+        <div class="row-label">Time</div>
+        <div class="seg" id="timeSeg">
+          <button data-time="60" class="active">60s</button>
+          <button data-time="120">120s</button>
+          <button data-time="0">Unlimited</button>
+        </div>
+
+        <div class="row-label">Mode</div>
+        <div class="seg" id="modeSeg">
+          <button data-mode="random" class="active">Random</button>
+          <button data-mode="custom">Custom</button>
+        </div>
+
+        <input id="customLetters" class="custom-input" maxlength="7" placeholder="Type letters" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+        <button id="startBtn" class="primary">Start</button>
+        <div id="setupError" class="error"></div>
+      </div>
+    </section>
+
+    <section id="game" class="screen game-screen hidden">
+      <div class="handle"></div>
+      <button id="shuffleBtn" class="circle-btn shuffle" aria-label="Shuffle">↹</button>
+      <button id="newBtn" class="circle-btn back hidden" aria-label="New game">‹</button>
+      <div id="timer" class="timer">00:60</div>
+      <button id="endBtn" class="end-btn hidden">End</button>
+
+      <div class="score-paper">
+        <div class="avatar">🙂</div>
+        <div>
+          <div class="words-count">WORDS: <span id="wordCount">0</span></div>
+          <div class="score-text">SCORE: <span id="score">0000</span></div>
+        </div>
+      </div>
+
+      <button id="enterBtn" class="enter" disabled>ENTER</button>
+
+      <div id="toast" class="toast"></div>
+      <div id="selectedRow" class="selected-row"></div>
+      <div id="letterRow" class="letter-row"></div>
+    </section>
+
+    <section id="results" class="screen results-screen hidden">
+      <div class="handle"></div>
+      <button id="resultsBack" class="circle-btn back" aria-label="New game">‹</button>
+      <div id="resultBanner" class="result-banner">GAME OVER</div>
+      <div class="results-grid">
+        <div class="player-card">
+          <div class="avatar big">🙂</div>
+          <div class="mini-paper">
+            <div>WORDS: <span id="finalWords">0</span></div>
+            <strong>SCORE: <span id="finalScore">0</span></strong>
+          </div>
+          <div id="foundList" class="word-panel"></div>
+        </div>
+      </div>
+      <button id="viewAllBtn" class="view-all">VIEW ALL WORDS</button>
+    </section>
+
+    <section id="allWords" class="screen all-screen hidden">
+      <div class="handle"></div>
+      <button id="allBack" class="circle-btn back" aria-label="Back">‹</button>
+      <h2>All Words</h2>
+      <div id="allList" class="all-list"></div>
+    </section>
+  </main>
+
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
