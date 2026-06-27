@@ -97,9 +97,11 @@
       if (!used) addFastTap(b, () => selectLetter(i));
       row.appendChild(b);
     }
+    row.onGapTap = e => selectNearestLetterFromRow(e, row);
   }
   function selectLetter(i){
     if (state.over || state.selected.length >= state.len) return;
+    if (state.selected.some(x => x.index === i)) return;
     state.selected.push({letter: state.letters[i], index:i});
     renderGame();
   }
@@ -171,6 +173,36 @@
     show('allWords');
   }
 
+  function selectNearestLetterFromRow(e, row){
+    if (e.target && e.target.closest && e.target.closest('button')) return;
+
+    const allPositions = Array.from(row.children);
+    if (!allPositions.length) return;
+
+    const point = e.touches && e.touches[0] ? e.touches[0] : e;
+    const x = point.clientX;
+    const y = point.clientY;
+
+    const rankedPositions = allPositions.map((tile, index) => {
+      const rect = tile.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = x - cx;
+      const dy = y - cy;
+      return {
+        tile,
+        index,
+        distance: dx * dx + dy * dy
+      };
+    }).sort((a, b) => a.distance - b.distance);
+
+    const twoClosestPositions = rankedPositions.slice(0, 2);
+    const closestAvailablePosition = twoClosestPositions.find(pos => pos.tile.classList.contains('tile'));
+
+    if (!closestAvailablePosition) return;
+    selectLetter(closestAvailablePosition.index);
+  }
+
   function addFastTap(el, handler){
     el.addEventListener('touchstart', e => {
       e.preventDefault();
@@ -181,6 +213,11 @@
       handler(e);
     });
   }
+
+  addFastTap($('letterRow'), e => {
+    const row = $('letterRow');
+    if (row.onGapTap) row.onGapTap(e);
+  });
 
   document.querySelectorAll('#lengthSeg button').forEach(b=>b.onclick=()=>{state.len=+b.dataset.length;document.querySelectorAll('#lengthSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('customLetters').maxLength=state.len;});
   document.querySelectorAll('#timeSeg button').forEach(b=>b.onclick=()=>{state.time=+b.dataset.time;document.querySelectorAll('#timeSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
