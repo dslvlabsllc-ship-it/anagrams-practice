@@ -203,6 +203,34 @@
     selectLetter(closestAvailablePosition.index);
   }
 
+  function handleLetterRowTouch(e){
+    if ($('game').classList.contains('hidden')) return;
+
+    const row = $('letterRow');
+    if (!row) return;
+
+    const touch = e.touches && e.touches[0] ? e.touches[0] : null;
+    if (!touch) return;
+
+    const rect = row.getBoundingClientRect();
+    const x = touch.clientX;
+    const y = touch.clientY;
+
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const tile = e.target && e.target.closest ? e.target.closest('#letterRow button') : null;
+    if (tile && tile.classList.contains('tile')) {
+      const index = Array.from(row.children).indexOf(tile);
+      if (index >= 0) selectLetter(index);
+      return;
+    }
+
+    selectNearestLetterFromRow(e, row);
+  }
+
   function addFastTap(el, handler){
     el.addEventListener('touchstart', e => {
       e.preventDefault();
@@ -213,6 +241,8 @@
       handler(e);
     });
   }
+
+  document.addEventListener('touchstart', handleLetterRowTouch, {passive:false, capture:true});
 
   addFastTap($('letterRow'), e => {
     const row = $('letterRow');
