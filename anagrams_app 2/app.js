@@ -85,7 +85,7 @@
       const item = state.selected[i];
       d.className = item ? 'tile' : 'slot ghost';
       d.textContent = item ? item.letter : '';
-      if (item) d.addEventListener('pointerdown', e => { e.preventDefault(); removeSelected(i); }, {passive:false});
+      if (item) addFastTap(d, () => removeSelected(i));
       sel.appendChild(d);
     }
     const row = $('letterRow'); row.innerHTML = '';
@@ -94,7 +94,7 @@
       const b = document.createElement('button');
       b.className = used ? 'slot' : 'tile';
       b.textContent = used ? '' : state.letters[i];
-      if (!used) b.addEventListener('pointerdown', e => { e.preventDefault(); selectLetter(i); }, {passive:false});
+      if (!used) addFastTap(b, () => selectLetter(i));
       row.appendChild(b);
     }
   }
@@ -171,12 +171,23 @@
     show('allWords');
   }
 
+  function addFastTap(el, handler){
+    el.addEventListener('touchstart', e => {
+      e.preventDefault();
+      handler(e);
+    }, {passive:false});
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      handler(e);
+    });
+  }
+
   document.querySelectorAll('#lengthSeg button').forEach(b=>b.onclick=()=>{state.len=+b.dataset.length;document.querySelectorAll('#lengthSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('customLetters').maxLength=state.len;});
   document.querySelectorAll('#timeSeg button').forEach(b=>b.onclick=()=>{state.time=+b.dataset.time;document.querySelectorAll('#timeSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
   document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('customLetters').classList.toggle('show',state.mode==='custom');});
   $('startBtn').onclick=startGame;
-  $('enterBtn').addEventListener('pointerdown',e=>{e.preventDefault();submit();},{passive:false});
-  $('shuffleBtn').addEventListener('pointerdown',e=>{e.preventDefault();shuffleLetters();},{passive:false});
+  addFastTap($('enterBtn'), submit);
+  addFastTap($('shuffleBtn'), shuffleLetters);
   $('endBtn').onclick=finish;
   $('newBtn').onclick=()=>show('setup');
   $('resultsBack').onclick=()=>show('setup');
